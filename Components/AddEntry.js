@@ -1,6 +1,16 @@
 import React, { Component } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { getMetricMetaInfo, timeToString, getDailyReminderValue } from "../utils/helpers";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform
+} from "react-native";
+import {
+  getMetricMetaInfo,
+  timeToString,
+  getDailyReminderValue
+} from "../utils/helpers";
 import Steppers from "./Steppers";
 import SliderComp from "./Slider";
 import DateHeader from "./DateHeader";
@@ -8,12 +18,16 @@ import { Ionicons } from "@expo/vector-icons";
 import TextButton from "./TextButton";
 import { submitEntry, removeEntry } from "../utils/API";
 import { connect } from "react-redux";
-import { addEntry } from "../actions"
+import { addEntry } from "../actions";
+import { white, purple } from "../utils/colors";
 
 function SubmitBtn({ onPress }) {
   return (
-    <TouchableOpacity onPress={onPress}>
-      <Text>Submit</Text>
+    <TouchableOpacity
+      style={Platform.OS === "ios" ? styles.iosButton : styles.AndroidButton}
+      onPress={onPress}
+    >
+      <Text style={styles.SubmitBtn}>Submit</Text>
     </TouchableOpacity>
   );
 }
@@ -58,9 +72,11 @@ class AddEntry extends Component {
     const key = timeToString();
     const entry = this.state;
 
-    this.props.dispatch(addEntry({
-      [key]: entry
-    }))
+    this.props.dispatch(
+      addEntry({
+        [key]: entry
+      })
+    );
 
     this.setState(() => ({
       run: 0,
@@ -76,9 +92,11 @@ class AddEntry extends Component {
   reset = () => {
     const key = timeToString();
 
-    this.props.dispatch(AddEntry({
-      [key]: getDailyReminderValue()
-    }))
+    this.props.dispatch(
+      AddEntry({
+        [key]: getDailyReminderValue()
+      })
+    );
 
     removeEntry(key);
   };
@@ -87,22 +105,22 @@ class AddEntry extends Component {
     const metaInfo = getMetricMetaInfo();
     if (this.props.alreadyLogged) {
       return (
-        <View>
-          <Ionicons name="ios-happy-outline" size={100} />
-          <Text>You already logged your information for today</Text>
+        <View style={styles.center}>
+          <Ionicons name={Platform.OS === 'ios' ? 'ios-happy-outline' : 'md-happy'} size={100} />
+          <Text style={{padding: 10}}>You already logged your information for today</Text>
           <TextButton onPress={this.reset}>Reset</TextButton>
         </View>
       );
     }
     return (
-      <View>
+      <View style={styles.container}>
         <DateHeader date={new Date().toLocaleDateString()} />
         {Object.keys(metaInfo).map(key => {
           const { getIcon, type, ...rest } = metaInfo[key];
           const value = this.state[key];
 
           return (
-            <View key={key}>
+            <View key={key} style={styles.row}>
               {getIcon()}
               {type === "slider" ? (
                 <SliderComp
@@ -129,11 +147,55 @@ class AddEntry extends Component {
   }
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: white
+  },
+  row: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  iosButton: {
+    backgroundColor: purple,
+    padding: 10,
+    borderRadius: 7,
+    height: 45,
+    marginLeft: 40,
+    marginRight: 40
+  },
+  AndroidButton: {
+    backgroundColor: purple,
+    padding: 10,
+    paddingLeft: 30,
+    paddingRight: 30,
+    borderRadius: 2,
+    height: 45,
+    alignSelf: "flex-end",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  SubmitBtn: {
+    color: white,
+    fontSize: 22,
+    textAlign: "center"
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 30,
+    marginRight: 30
+  }
+});
+
 function mapStatetoProps(state) {
   const key = timeToString();
   return {
-    alreadyLogged: state[key] && typeof state[key].today === 'undefined'
-  }
+    alreadyLogged: state[key] && typeof state[key].today === "undefined"
+  };
 }
 
 export default connect(mapStatetoProps)(AddEntry);
